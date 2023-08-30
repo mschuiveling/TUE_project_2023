@@ -16,7 +16,7 @@ setup_logger()
 
 def setup_cfg():
     cfg = get_cfg()
-    cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_X_101_32x8d_FPN_3x.yaml"))
+    cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
     cfg.MODEL.WEIGHTS = '/home/mschuive/detectron2/output/model_final.pth'
 
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.50  # Set a custom testing threshold for non-maxium suppression to counter double detections of cells

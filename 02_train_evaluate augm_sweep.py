@@ -133,13 +133,13 @@ class RandomGaussianBlur(T.Augmentation):
 
 # Load the datasets
 train_dataset = fo.Dataset.from_dir(
-    dataset_dir="/mnt/d/TIL_Melanoma_train_database/cell_segmentation/coco_database_train_test/train/51_dataset",
+    dataset_dir="/mnt/d/TIL_Melanoma_train_database/cell_segmentation/coco_database_train_test/train/51_dataset", # veranderen naar eigen path
     dataset_type=fo.types.FiftyOneDataset,
     label_field="ground_truth",
     tags="train",
 )
 test_dataset = fo.Dataset.from_dir(
-    dataset_dir="/mnt/d/TIL_Melanoma_train_database/cell_segmentation/coco_database_train_test/test/51_dataset",
+    dataset_dir="/mnt/d/TIL_Melanoma_train_database/cell_segmentation/coco_database_train_test/test/51_dataset", # veranderen naar eigen path
     dataset_type=fo.types.FiftyOneDataset,
     label_field="ground_truth",
     tags="test",
@@ -199,6 +199,7 @@ def get_fiftyone_dicts(samples):
         dataset_dicts.append(record)
 
     return dataset_dicts
+
 DatasetCatalog.register(
     "train", lambda view=train_view: get_fiftyone_dicts(train_dataset)
 )
@@ -210,13 +211,13 @@ MetadataCatalog.get("train").set(
 MetadataCatalog.get("test").set(thing_classes=["Tumor", "Immune cells", "Other"])
 MetadataCatalog.get("test").set(thing_colors=[(255, 0, 0), (0, 255, 0), (0, 0, 255)])
 
-# Create custom datasetmapper to apply data augmentations
+# Create custom datasetmapper to apply data augmentations 
 class MyDatasetMapper(DatasetMapper):
     def __init__(
         self,
         cfg,
         is_train=True,
-        brightness_min=0.85,
+        brightness_min=0.85, # aanpassing niet werkzaam, aanpassen hieronder (regel 314)
         brightness_max=1.0,
         flip_prob=0.5,
         blur_sigma=1.0,
@@ -322,6 +323,8 @@ class MyTrainer(DefaultTrainer):
                 randomlight=0.5,
             )
         )
+    
+    # Hierboven data augmentations toevoegen
 
 
 import os
@@ -358,9 +361,9 @@ def sweep_config():
                 # "COCO-InstanceSegmentation/mask_rcnn_R_50_C4_1x.yaml",
                                 # "COCO-InstanceSegmentation/mask_rcnn_R_50_DC5_1x.yaml",
                                 # "COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_1x.yaml",
-                                "COCO-InstanceSegmentation/mask_rcnn_R_50_C4_3x.yaml",
+                                # "COCO-InstanceSegmentation/mask_rcnn_R_50_C4_3x.yaml",
                                 # "COCO-InstanceSegmentation/mask_rcnn_R_50_DC5_3x.yaml",
-                                # "COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml",
+                                "COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml",  # this one for TUE experiments
                                 # "COCO-InstanceSegmentation/mask_rcnn_R_101_C4_3x.yaml",
                                 # "COCO-InstanceSegmentation/mask_rcnn_R_101_DC5_3x.yaml",
                                 # "COCO-InstanceSegmentation/mask_rcnn_R_101_FPN_3x.yaml",
@@ -399,7 +402,7 @@ def setup_cfg():
 def train_model():
     wandb.init(
          sync_tensorboard=True,
-        name="anchor_boxes_sweep",
+        name="projectnaam",
     )
 
     cfg= setup_cfg()
@@ -411,7 +414,7 @@ def train_model():
 
 def wandb_sweep():
     config_s = sweep_config()
-    sweep_id = wandb.sweep(config_s, project="TIL_detectron2")
+    sweep_id = wandb.sweep(config_s, project="bep")
     wandb.agent(sweep_id, train_model)
 
 if __name__ == "__main__":
