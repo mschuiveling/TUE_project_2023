@@ -192,8 +192,13 @@ class MyTrainer(DefaultTrainer):
         if output_folder is None:
             output_folder = os.path.join(cfg.OUTPUT_DIR, "inference")
         return COCOEvaluator(
-            dataset_name, cfg, True, output_folder, max_dets_per_image=3000
-        )
+            dataset_name=dataset_name,
+            tasks = ["bbox", "segm"],
+            distributed=True,
+            output_dir=output_folder,
+            max_dets_per_image=3000,
+            allow_cached_coco=False,
+            )
 
     def build_hooks(self):
         hooks = super().build_hooks()
