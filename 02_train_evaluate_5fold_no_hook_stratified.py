@@ -116,7 +116,6 @@ from sklearn.model_selection import train_test_split, StratifiedKFold
 # Load the COCO annotations
 annotation_path = "/mnt/d/TIL_Melanoma_train_database/cell_segmentation/open_source_dataset_tiles_final/til_melanoma.json" # path to annotation file from 01_coco_creator_5fold
 
-
 with open(annotation_path, "r") as f:
     data = json.load(f)
     images = data['images']
@@ -178,8 +177,13 @@ for fold, (train_idx_total, val_idx_total) in enumerate(kf.split(images, [0]*len
 
 # Define the dataset_combinations dictionary
 dataset_combinations = {
-    f"fold_{i}": {"train": f"train_dataset_stratified_fold_{i}", "val": f"val_dataset_stratified_fold_{i}"} for i in range(5)
+    # "fold_0": {"train": "train_dataset_stratified_fold_0", "val": "val_dataset_stratified_fold_0"},
+    # "fold_1": {"train": "train_dataset_stratified_fold_1", "val": "val_dataset_stratified_fold_1"},
+    # "fold_2": {"train": "train_dataset_stratified_fold_2", "val": "val_dataset_stratified_fold_2"},
+    # "fold_3": {"train": "train_dataset_stratified_fold_3", "val": "val_dataset_stratified_fold_3"},
+    "fold_4": {"train": "train_dataset_stratified_fold_4", "val": "val_dataset_stratified_fold_4"}
 }
+
 
 # Create custom datasetmapper to apply data augmentations
 class MyDatasetMapper(DatasetMapper):
@@ -293,6 +297,8 @@ def sweep_config():
             # "anch_3": {"min": 32, "max": 128},
             # "anch_4": {"min": 64, "max": 256},
             # "anch_5": {"min": 128, "max": 512},
+            # "NMS_THRESH_TEST" : {"values": [0.3, 0.5, 0.6, 0.7, 0.8, 0.9]},
+            # "SCORE_THRESH_TEST" : {"min": 0.01, "max": 0.30},
             "cross_val": {"values": list(dataset_combinations.keys())},
             "model": {
                 "values": [
@@ -323,6 +329,7 @@ def setup_cfg():
     val_dataset_stratified_name = dataset_combinations[combo_key]['val']
     cfg.DATASETS.TRAIN = (train_dataset_stratified_name,)
     cfg.DATASETS.TEST = (val_dataset_stratified_name,)
+
         # cfg.MODEL.ANCHOR_GENERATOR.SIZES = [
     #     [
     #         wandb.config.anch_1,
@@ -337,21 +344,26 @@ def setup_cfg():
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(wandb.config.model)
     cfg.SOLVER.IMS_PER_BATCH = 6
     cfg.TEST.EVAL_PERIOD = 100
-    cfg.TEST.DETECTIONS_PER_IMAGE = 1000
+    cfg.TEST.DETECTIONS_PER_IMAGE = 2500
+    # cfg.MODEL.ROI_HEADS.NMS_THRESH_TEST = wandb.config.NMS_THRESH_TEST
+
+    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.05
+
     cfg.SOLVER.BASE_LR = 0.001
-    cfg.SOLVER.MAX_ITER = 10000
+    cfg.SOLVER.MAX_ITER = 1000
     cfg.SOLVER.STEPS = []
     cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 512
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = 3
     cfg.DATALOADER.MASK_FORMAT = "rle"  # or "polygon" if you're using polygon encoding
     cfg.INPUT.MASK_FORMAT = ("bitmask")
+    cfg.OUTPUT_DIR = f"/mnt/d/TIL_Melanoma_train_database/cell_segmentation/open_source_dataset_tiles_final/output/{wandb.run.name}"
 
     return cfg
 
 def train_model():
     wandb.init(
         sync_tensorboard=True,
-        name="5fold_crossval_new_data",
+        name="TUE",
     )
 
     cfg = setup_cfg()
@@ -363,7 +375,7 @@ def train_model():
 
 def wandb_sweep():
     config_s = sweep_config()
-    sweep_id = wandb.sweep(config_s, project="TUE_1")
+    sweep_id = wandb.sweep(config_s, project="TUE_2 evaluate cross_val")
     wandb.agent(sweep_id, train_model)
 
 if __name__ == "__main__":
